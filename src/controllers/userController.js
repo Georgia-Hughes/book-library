@@ -1,14 +1,29 @@
-const User = require('../models/user');
+const User = require('../models/userModel');
 
 exports.create = (req, res) => {
   const user = new User({
     firstName: req.body.firstName,
-    lastName: req.body.lastName,
+    secondName: req.body.secondName,
     email: req.body.email,
     password: req.body.password,
   });
+
   user.save()
-    .then((data) => {
-      res.status(201).json(data.toObject());
+    .then(() => {
+      res.status(201).json(user.sanitise());
+    })
+    .catch((error) => {
+      if (error.name === 'ValidationError') {
+        const emailError = error.errors.email ? error.errors.email.message : null;
+        const passwordError = error.errors.password ? error.errors.password.message : null;
+        res.status(400).json({
+          errors: {
+            email: emailError,
+            password: passwordError,
+          },
+        });
+      } else {
+        res.sendStatus(500);
+      }
     });
 };
